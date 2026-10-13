@@ -1,0 +1,19 @@
+.venv/
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+*.pyc
+logs/
+data/
+
+# Base de datos SQLite con datos reales de solicitudes y requester_id de empleados
+ad_support.db
+ad_support.db-journal
+ad_support.db-wal
+ad_support.db-shm
+
+# Empaquetados / respaldos locales
+*.zip
