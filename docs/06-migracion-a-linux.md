@@ -1,7 +1,8 @@
 # 06 — Migración a Linux (Ubuntu)
 
-**Estado: fase de validación.** El servidor de despliegue asignado es Ubuntu; la app hoy
-corre en Windows porque `active_directory.py` invoca PowerShell. Este documento registra
+**Estado: fase de validación — Cortes 1 y 2 completados.** El servidor de despliegue
+asignado es Ubuntu. `active_directory.py` ya **no invoca PowerShell**: se reescribió con
+`ldap3` el **2026-10-13** conservando el contrato original. Este documento registra
 qué se validó, qué falta y cómo operar.
 
 > **Verificación:** todo lo marcado ✅ fue probado de punta a punta contra el DC real
@@ -224,8 +225,8 @@ o nulo, en vez de la cuenta personal de un humano.
 | # | Pendiente | Bloqueante |
 |---|---|---|
 | 1 | **Cuenta de servicio AD** (`svc_adsupport`) con permisos delegados de reset/desbloqueo | **SÍ** — no se despliega sin ella |
-| 2 | Reescribir `active_directory.py` con `ldap3` (mismo interfaz) | SÍ |
-| 3 | Probar **escritura** desde Linux (`unicodePwd`, `lockoutTime=0`, `pwdLastSet=0`) | SÍ |
+| 2 | ~~Reescribir `active_directory.py` con `ldap3` (mismo interfaz)~~ ✅ **Hecho 2026-10-13** — 71 pruebas OK, `active_directory.py` al 90% | — |
+| 3 | Probar **escritura** desde Linux (`unicodePwd`, `lockoutTime=0`, `pwdLastSet=0`) | SÍ — requiere #1 |
 | 4 | `systemd` + logrotate + cron de backup | No (operativo) |
 | 5 | Verificar tras renovación del cert del DC (§3.1) | No |
 
@@ -250,11 +251,13 @@ AD_BIND_PASSWORD=<password>
 
 ## 9. Próximos pasos sugeridos
 
-1. Recibir la cuenta de servicio → probar bind + lectura (10 s con el venv ya listo).
-2. Reescribir `active_directory.py` con `ldap3`, conservando:
-   - `_validate_username` (puerta anti-inyección — **se mantiene igual**, sigue siendo válida)
+1. ~~Reescribir `active_directory.py` con `ldap3`~~ ✅ **Hecho 2026-10-13**, conservando:
+   - `_validate_username` (puerta anti-inyección — **sin cambios**, byte a byte)
    - la firma de las 3 funciones y sus tipos de retorno
    - el contrato de excepciones (`ValueError`, `LookupError`, `RuntimeError`)
-3. Correr la suite existente (`tests/` + `test_full_flow.py`) — mockea AD, debe pasar sin cambios.
+2. ~~Correr la suite existente~~ ✅ `tests/` + `test_full_flow.py` pasan sin tocar un solo
+   test previo (71 + 52). Se añadieron 39 pruebas nuevas del mapeo LDAP
+   (`tests/test_active_directory_ldap.py`).
+3. Recibir la cuenta de servicio → probar bind + lectura (10 s con el venv ya listo).
 4. Probar escritura en una cuenta de **prueba**, nunca en producción.
 5. Empaquetar: `systemd` + logrotate + backup.

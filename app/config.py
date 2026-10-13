@@ -5,6 +5,12 @@ class Settings(BaseSettings):
     ad_domain: str = "unetrans.com.co"
     ad_server: str = "SIMM-PDC1.unetrans.com.co"
 
+    # Cuenta de servicio LDAP (migración a Linux, ver docs/06).
+    # Vacía por defecto: sin ellas, las operaciones de AD fallan con un
+    # error explícito en lugar de impedir el arranque del proceso.
+    ad_bind_user: str = ""
+    ad_bind_password: str = ""
+
     api_key: str
 
     tenant_id: str

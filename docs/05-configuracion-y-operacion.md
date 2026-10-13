@@ -87,15 +87,18 @@ Todos desde la raíz del proyecto, en PowerShell:
 ### Pruebas
 
 ```powershell
-# 32 pruebas unitarias/de API (tests/)
+# 71 pruebas unitarias/de API (tests/)
 .venv\Scripts\python.exe -m pytest tests\ -q
 
 # 52 checks de flujo integral (mockea AD/Graph)
 .venv\Scripts\python.exe test_full_flow.py
 
-# Cobertura combinada (branch; 43% tras la auditoría + eliminación de la Mesa de Ayuda)
+# Cobertura combinada (branch; 60% tras la migración a LDAP)
+# IMPORTANTE: --append va justo después de "run", NO al final. Si se pone
+# después del script, el flag lo recibe el script (lo ignora) y coverage
+# SOBRESCRIBE el acumulado, midiendo solo la última corrida.
 .venv\Scripts\python.exe -m coverage run --branch --source=app -m pytest tests\
-.venv\Scripts\python.exe -m coverage run --branch --source=app test_full_flow.py --append
+.venv\Scripts\python.exe -m coverage run --append --branch --source=app test_full_flow.py
 .venv\Scripts\python.exe -m coverage report
 ```
 

@@ -6,7 +6,7 @@ en Microsoft Graph/Teams y notificación automática del resultado al solicitant
 
 - **Stack:** Python 3.14 · FastAPI · SQLAlchemy (SQLite) · Alembic · SDK microsoft_teams · MSAL/Graph · PowerShell + módulo ActiveDirectory
 - **Versión de la app:** 0.5.0 (`app/main.py`)
-- **Pruebas:** 32 pytest (`tests/`) + 52 checks de flujo integral (`test_full_flow.py`)
+- **Pruebas:** 71 pytest (`tests/`) + 52 checks de flujo integral (`test_full_flow.py`)
 - **Plataforma:** Windows (PowerShell + RSAT) · **Migración a Linux en curso** — ver [docs/06-migracion-a-linux.md](docs/06-migracion-a-linux.md)
 
 ## Inicio rápido
@@ -43,6 +43,6 @@ Aprobaciones vía Microsoft Teams/Graph.
 ## Pruebas
 
 ```powershell
-.venv\Scripts\python.exe -m pytest tests\ -q      # 32 pruebas unitarias/de API
+.venv\Scripts\python.exe -m pytest tests\ -q      # 71 pruebas unitarias/de API
 .venv\Scripts\python.exe test_full_flow.py        # 52 checks de flujo integral
 ```

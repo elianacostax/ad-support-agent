@@ -89,7 +89,7 @@ ad-support-agent/
 │       ├── conversation_store.py # Caché en memoria requester→conversación Teams
 │       ├── session_manager.py  # Agentes por sesión de conversación
 │       └── teams_cards.py      # AdaptiveCard de prueba
-├── tests/                      # 32 pruebas pytest (puertas de seguridad, APIs, builders)
+├── tests/                      # 71 pruebas pytest (puertas de seguridad, APIs, builders, LDAP)
 ├── test_full_flow.py           # 52 checks de flujo integral (mockea AD/Graph)
 ├── alembic/                    # 4 migraciones (head: fab551fff4d9)
 ├── scripts/                    # stop/check service, login de cuenta técnica, debug_*

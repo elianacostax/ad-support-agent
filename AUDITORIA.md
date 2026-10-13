@@ -12,7 +12,7 @@
 |---|---|---|
 | 🔒 Seguridad | 1 HIGH · 2 MEDIUM · 4 LOW · 4 INFO | HIGH y MEDIUM críticos **cerrados** |
 | 🧹 Código | 1 HIGH · 3 MEDIO · 4 BAJO | HIGH + limpieza **cerrados** |
-| 🧪 Pruebas | Cobertura 35% → 51% (auditoría) → **43%** actual | 32 tests, todos OK |
+| 🧪 Pruebas | Cobertura 35% → 51% (auditoría) → 43% → **60%** actual | 71 tests, todos OK |
 | 🧩 Alcance | **Mesa de Ayuda eliminada** (2026-10-09, decisión del usuario) | OAuth + frontend + 2 routers fuera; CR-002 y FIND-002 cerrados |
 
 **Verificaciones finales (post-eliminación de la Mesa de Ayuda):** ruff: solo FIND-005
@@ -83,8 +83,9 @@ debug **y helpdesk** → 404 · API protegida → 401 · dependencias sin CVEs c
 ## 4. Pruebas
 
 ### Ejecutado
-- **Cobertura (branch, combinado pytest + suite integral): 35% → 51% → 43% actual**
-  (la baja es recomposición: los módulos helpdesk eliminados estaban muy cubiertos)
+- **Cobertura (branch, combinado pytest + suite integral): 35% → 51% → 43% → 60% actual**
+  (la baja era recomposición: los módulos helpdesk eliminados estaban muy cubiertos;
+   el salto a 60% es por la migración a LDAP — `active_directory.py` pasó a 90%)
 - Suite `tests/` — **32 tests pytest, todos pasan** (eran 41; se retiraron los 9 del helpdesk):
   - `test_security_gates.py` — API key (401/403) y `is_ad_approver` → 100% esas unidades
   - `test_username_validation.py` — 18 intentos de inyección PowerShell rechazados
@@ -121,7 +122,8 @@ debug **y helpdesk** → 404 · API protegida → 401 · dependencias sin CVEs c
 - [x] `.gitignore` ampliado (`.ruff_cache/`, `.coverage`)
 - [x] 41 tests nuevos en `tests/` (puertas de seguridad, inyección, notificación, builders)
   — hoy **32** tras retirar los 9 del helpdesk
-- [x] Cobertura medida: 35% → 51% → 43% actual (recomposición tras eliminaciones)
+- [x] Cobertura medida: 35% → 51% → 43% → 60% actual (recomposición tras eliminaciones;
+      60% medido con `--append` correctamente colocado — ver [05](docs/05-configuracion-y-operacion.md))
 - [x] Servicio reiniciado con el código nuevo (puerto 3978, worker 15s)
 - [x] Verificación post-cambio: `/health` 200 · debug 404 · `/approvals/pending` sin key 401
 - [x] **Mesa de Ayuda + Entra eliminada** (2026-10-09): routers `helpdesk_auth` y
