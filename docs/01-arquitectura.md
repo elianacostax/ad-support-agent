@@ -28,8 +28,8 @@
                                      └──────────────────────────┘
 
         Cualquier ejecución sobre AD:
-        Python → subprocess PowerShell (módulo ActiveDirectory)
-                 variables de entorno AD_TARGET_USER/AD_SERVER/AD_TEMP_PASSWORD
+        Python → ldap3 sobre LDAPS :636 (cuenta de servicio AD_BIND_USER)
+                 certificado del DC validado contra la CA interna
 ```
 
 **Ciclo de vida de una solicitud:** el usuario escribe en Teams → el agente detecta la

@@ -344,3 +344,82 @@ def test_connect_sin_cuenta_de_servicio_falla_explicito(monkeypatch):
         ad._connect()
 
     assert "AD_BIND_USER" in str(exc.value)
+
+
+# ------------------------------------------------------------------
+# list_locked_enabled_users
+# ------------------------------------------------------------------
+
+def test_list_locked_devuelve_solo_bloqueadas_habilitadas(patch_conn):
+    """Debe filtrar: habilitada+bloqueada sí; deshabilitada no; habilitada sin bloqueo no."""
+    ahora = _FILETIME_EPOCH
+    bloqueada = _FILETIME_EPOCH.replace(year=2026)
+
+    entradas = [
+        _Entry(sam="sacosta", uac=_UAC_NORMAL, lockout=bloqueada),   # HABILITADA + BLOQUEADA -> incluir
+        _Entry(sam="inactivo", uac=_UAC_DISABLED, lockout=bloqueada), # DESHABILITADA + BLOQUEADA -> excluir
+        _Entry(sam="sana", uac=_UAC_NORMAL, lockout=ahora),           # HABILITADA + SIN BLOQUEO -> excluir
+    ]
+    conn = patch_conn(_FakeConn(entradas))
+
+    resultado = ad.list_locked_enabled_users()
+
+    usernames = {u["username"] for u in resultado}
+    assert usernames == {"sacosta"}
+
+    # El filtro LDAP debe contener la regla de bit AND y lockoutTime>=1
+    filtro = conn.search_calls[0][1]
+    assert "1.2.840.113556.1.4.803" in filtro
+    assert "lockoutTime>=1" in filtro
+    assert conn.bound is False
+
+
+def test_list_locked_devuelve_lista_vacia_sin_coincidencias(patch_conn):
+    """Si no hay cuentas bloqueadas y habilitadas, devuelve [] sin fallar."""
+    conn = patch_conn(_FakeConn([
+        _Entry(sam="sana", uac=_UAC_NORMAL, lockout=_FILETIME_EPOCH),
+    ]))
+
+    assert ad.list_locked_enabled_users() == []
+    assert conn.bound is False
+
+
+def test_list_locked_campos_de_cada_usuario(patch_conn):
+    """Cada entrada debe traer username, dn, lockout_time y opcionalmente mail/upn."""
+    bloqueada = _FILETIME_EPOCH.replace(year=2026)
+    pwd = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    entrada = _Entry(
+        sam="sacosta",
+        uac=_UAC_NORMAL,
+        lockout=bloqueada,
+        pwd=pwd,
+    )
+    entrada.userPrincipalName = type("A", (), {"value": "sacosta@unetrans.com.co"})()
+    entrada.displayName = type("A", (), {"value": "Sergio Acosta"})()
+    entrada.mail = type("A", (), {"value": "sacosta@unetrans.com.co"})()
+    entrada.distinguishedName = type("A", (), {"value": "CN=Sergio,OU=Usuarios,DC=unetrans,DC=com,DC=co"})()
+
+    conn = patch_conn(_FakeConn([entrada]))
+
+    resultado = ad.list_locked_enabled_users()
+
+    assert len(resultado) == 1
+    u = resultado[0]
+    assert u["username"] == "sacosta"
+    assert u["locked_out"] is True
+    assert u["dn"] == "CN=Sergio,OU=Usuarios,DC=unetrans,DC=com,DC=co"
+    assert u["mail"] == "sacosta@unetrans.com.co"
+    assert u["user_principal_name"] == "sacosta@unetrans.com.co"
+    assert u["lockout_time"] is not None
+    assert conn.bound is False
+
+
+def test_list_locked_falla_si_no_hay_cuenta_de_servicio(monkeypatch):
+    """Sin AD_BIND_USER debe lanzar RuntimeError claro."""
+    monkeypatch.setattr(ad.settings, "ad_bind_user", "")
+    monkeypatch.setattr(ad.settings, "ad_bind_password", "")
+
+    with pytest.raises(RuntimeError) as exc:
+        ad.list_locked_enabled_users()
+
+    assert "AD_BIND_USER" in str(exc.value)

@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  ad-support-agent:
+    build: .
+    container_name: ad-support-agent
+    restart: unless-stopped
+    ports:
+      - "3978:3978"
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Bogota
+      - DAILY_UNLOCK_DRY_RUN=true        # pon "false" solo cuando quieras desbloquear realmente
+      - DAILY_UNLOCK_ENABLED=false       # pon "true" para activar desbloqueo real
+    volumes:
+      - ./logs:/app/logs                 # persistencia de logs de auditoría y cron
+      - ./data:/app/data                 # caché de tokens MSAL
+      - ./ad_support.db:/app/ad_support.db  # base de datos SQLite (opcional; si no existe se crea vacía)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3978/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - ad-support-net
+
+networks:
+  ad-support-net:
+    driver: bridge

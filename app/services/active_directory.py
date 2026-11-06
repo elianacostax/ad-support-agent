@@ -209,6 +209,84 @@ def reset_user_password(username: str) -> dict:
         conn.unbind()
 
 
+def list_locked_enabled_users() -> list[dict]:
+    """
+    Enumera cuentas de AD que estén HABILITADAS pero BLOQUEADAS por lockout.
+
+    Filtro LDAP:
+      - !(userAccountControl:1.2.840.113556.1.4.803:=2)  -> cuenta habilitada (bit ACCOUNTDISABLE desactivado)
+      - lockoutTime > 1601-01-01                          -> bloqueada por lockout
+
+    Devuelve una lista de dicts con: username, sam, lockout_time (ISO), dn.
+    """
+    conn = _connect()
+
+    try:
+        # 1.2.840.113556.1.4.803 = reglas LDAP_MATCHING_RULE_BIT_AND (bitwise AND).
+        # userAccountControl & ACCOUNTDISABLE == 0  =>  cuenta no deshabilitada.
+        search_filter = (
+            "(&"
+            "(!(userAccountControl:1.2.840.113556.1.4.803:=2))"
+            "(lockoutTime>=1)"
+            ")"
+        )
+
+        conn.search(
+            search_base=_base_dn(),
+            search_filter=search_filter,
+            attributes=[
+                "sAMAccountName",
+                "userPrincipalName",
+                "displayName",
+                "mail",
+                "userAccountControl",
+                "lockoutTime",
+                "distinguishedName",
+            ],
+            size_limit=0,  # sin paginación artificial; ldap3 maneja referrals si aplica
+        )
+
+        results: list[dict] = []
+
+        for entry in conn.entries:
+            sam = str(entry.sAMAccountName.value) if entry.sAMAccountName.value else ""
+            lockout_time = _as_datetime(entry.lockoutTime.value)
+            dn = str(entry.distinguishedName.value) if entry.distinguishedName.value else ""
+
+            results.append(
+                {
+                    "username": sam,
+                    "sam": sam,
+                    "user_principal_name": (
+                        str(entry.userPrincipalName.value)
+                        if entry.userPrincipalName.value
+                        else None
+                    ),
+                    "display_name": (
+                        str(entry.displayName.value)
+                        if entry.displayName.value
+                        else None
+                    ),
+                    "mail": (
+                        str(entry.mail.value) if entry.mail.value else None
+                    ),
+                    "dn": dn,
+                    "locked_out": True,
+                    "lockout_time": lockout_time.isoformat() if lockout_time else None,
+                }
+            )
+
+        return results
+
+    except LDAPException as exc:
+        raise RuntimeError(
+            "No fue posible enumerar cuentas bloqueadas en Active Directory."
+        ) from exc
+
+    finally:
+        conn.unbind()
+
+
 def unlock_user(username: str) -> dict:
     username = _validate_username(username)
 
