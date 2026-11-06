@@ -60,6 +60,7 @@ def run(dry_run: bool = True) -> dict:
         return {
             "started_at": started_at.isoformat(),
             "finished_at": datetime.now(timezone.utc).isoformat(),
+            "dry_run": dry_run,
             "error": str(exc),
             "locked_found": 0,
             "unlocked": [],
