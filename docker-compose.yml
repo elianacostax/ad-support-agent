@@ -17,6 +17,7 @@ services:
       - ./logs:/app/logs                 # persistencia de logs de auditoría y cron
       - ./data:/app/data                 # caché de tokens MSAL
       - ./ad_support.db:/app/ad_support.db  # base de datos SQLite (opcional; si no existe se crea vacía)
+      - ./certs:/app/certs:ro            # CA interna para LDAPS (opcional; colocar ca-simm-pdc1-ca.crt aquí)
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3978/health', timeout=3)"]
       interval: 30s

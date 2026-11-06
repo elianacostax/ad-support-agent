@@ -13,6 +13,17 @@ APP_DIR="/app"
 cd "$APP_DIR"
 
 echo "[ENTRYPOINT] Esperando a que las variables de entorno estén listas..."
+
+# ---------------------------------------------------------------------------
+# Instalar CA interna de Active Directory para LDAPS (si se montó el certificado)
+# El certificado se espera en /app/certs/ca-simm-pdc1-ca.crt
+# ---------------------------------------------------------------------------
+if [ -f /app/certs/ca-simm-pdc1-ca.crt ]; then
+    echo "[ENTRYPOINT] Instalando CA interna para LDAPS..."
+    cp /app/certs/ca-simm-pdc1-ca.crt /usr/local/share/ca-certificates/ca-simm-pdc1-ca.crt
+    update-ca-certificates
+fi
+
 if [ -f .env ]; then
     set -a
     . .env
